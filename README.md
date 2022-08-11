@@ -1,2 +1,2 @@
-# CG_PHPDB
- Estudos com PHP e MySQL
+# CG_PHPDB_01
+Site modelo para aulas de PHP com DB em Campo Grande.
