@@ -16,10 +16,10 @@ date_default_timezone_set('America/Sao_Paulo');
  **********************/
 
 // Define o nome do site:
-$site_name = "Cripei";
+$site_name = "Creepei";
 
 // Define o slogan do site:
-$site_slogan = "Cripe e resolva!";
+$site_slogan = "Creepe e resolva!";
 
 // Define o logotipo do site:
 $site_logo = "/img/logo01.128.png";
@@ -98,7 +98,7 @@ endif;
 /**
  * Sanitiza campos de formulários usando method="POST":
  * Outros filtros podem ser implementados nesta função.
- **/ 
+ **/
 function post_clean($post_field, $type = 'string')
 {
 

@@ -4,10 +4,12 @@
 
 #comment {
     border: none;
+    margin: 0;
 }
 
 #comment button {
-    margin-left: 1rem;
+    display: block;
+    margin: .5rem 0 0 .5rem;
 }
 
 aside .author img {
@@ -44,8 +46,50 @@ aside ul {
     padding: .4rem;
     font-size: small;
     border-bottom: 1px dotted grey;
+    display: flex;
+    align-items: center;
 }
 
-.comment-content {
+.comment-info img {
+    display: block;
+    margin-right: .4rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+}
+
+.author-date {
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+div.comment-content {
     padding: .5rem;
+}
+
+.comment-sended {
+    background: rgb(196, 255, 196);
+    color: rgb(0, 72, 0);
+    padding: .5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    border-radius: .3rem;
+}
+
+.author-tools {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+}
+
+.edit-form textarea {
+    border: none !important;
+    border-radius: 0 !important;
+    background: rgb(230, 230, 230) !important;
+}
+
+.edit-form button {
+    display: block;
+    margin: auto;
 }

@@ -133,20 +133,58 @@ $conn->query($sql);
  ***************/
 
 // Define variáveis:
-$comments = '';
+$comments = $author_tools = '';
+$counter = 0;
 
 // Se usuário está logado...
 if ($user) :
 
-    // Action do form:
-    $action = htmlspecialchars($_SERVER["PHP_SELF"]);
+    // Se um comentário foi enviado...
+    if ($_SERVER["REQUEST_METHOD"] == "POST") :
 
+        // Obtém e sanitiza o comentário enviado:
+        $new_comment = post_clean('comment', 'string');
+
+        // Grava comentário no banco de dados:
+        $sql = <<<SQL
+    
+    INSERT INTO comments (cmt_author, cmt_article, cmt_content) VALUES (
+        '{$user['id']}',
+        '{$id}',
+        '{$new_comment}'
+    );
+    
+    SQL;
+        $conn->query($sql);
+
+        // Comentário enviado com sucesso:
+        $comments .= <<<HTML
+        <div class="comment-sended">Comentário enviado com sucesso!</div>
+        <script>
+            // Vai para a âncora de comentários:
+            location.href = "#comments";
+
+            // Oculta feedback em alguns segundos:
+            setTimeout(() => { 
+                document.getElementsByClassName('comment-sended')[0].style.display = 'none';
+            }, 5000);        
+            
+            // Previne o reenvio do formulário ao recarregar a página:
+            if ( window.history.replaceState )
+                window.history.replaceState( null, null, window.location.href );
+        </script>
+HTML;
+
+    endif;
+
+    // Action do form:
+    $action = htmlspecialchars($_SERVER["PHP_SELF"]) . "?{$id}";
+
+    // Formulário de comentários:
     $comments .= <<<HTML
 
 <form action="{$action}" method="post" id="comment">
-    <label>
-        <textarea name="comment" id="comment"></textarea>
-    </label>
+    <textarea name="comment" id="comment"></textarea>
     <button type="submit">Enviar</button>
 </form>
 
@@ -172,7 +210,7 @@ $sql = <<<SQL
 
 SELECT
     comments.*,
-    users.user_name,
+    user_name, user_avatar,
     DATE_FORMAT(cmt_date, '%d/%m/%Y às %h:%i') AS date_br
 FROM comments
 INNER JOIN users ON cmt_author = user_id
@@ -189,11 +227,8 @@ $total_comments = $res->num_rows;
 // Se não tem comentários...
 if ($total_comments < 1) :
 
-    $comments .= <<<HTML
-    
-<p class="center">Nenhum comentário encontrado. Seja a(o) primeira(o) a comentar!</p>
-
-HTML;
+    // Exibe mensagem convidando a comentar:
+    $comments .= '<p class="center">Nenhum comentário encontrado. Seja a(o) primeira(o) a comentar!</p>';
 
 // Se tem comentários...
 else :
@@ -201,18 +236,47 @@ else :
     // Loop para extrair cada comentário:
     while ($cmt = $res->fetch_assoc()) :
 
-        // Trata comentário:
+        // Formata comentário para HTML:
         $cmt_body = nl2br($cmt['cmt_content']);
 
+        // Se o comentário é do usuário logado...
+        if ($user) :
+            if ($user['id'] == $cmt['cmt_author']) :
+
+                // Mostra ferramentas do usuário:
+                $author_tools = <<<HTML
+
+<div class="author-tools">
+    <a href="#edit" data-id="{$cmt['cmt_id']}"><i class="fa-solid fa-pen-to-square"></i></a>
+    <a href="/delcom/?c={$cmt['cmt_id']}&a={$id}" onclick="return confirmDel()"><i class="fa-solid fa-trash"></i></a>
+</div>
+
+HTML;
+
+            else :
+
+                // Oculta ferramentas do usuário:
+                $author_tools = '';
+
+            endif;
+        endif;
+
+        // Bloco de comentário:
         $comments .= <<<HTML
 
 <div class="comment-item">
 
     <div class="comment-info">
-        Por {$cmt['user_name']}<br>
-        Em ${cmt['date_br']}.
+        <img src="{$cmt['user_avatar']}" alt="{$cmt['user_name']}">
+        <div class="author-date">
+            Por {$cmt['user_name']}<br>
+            Em ${cmt['date_br']}.
+        </div>
+        {$author_tools}
     </div>
-    <div class="comment-content">{$cmt_body}</div>
+    <div class="comment-box" id="comment-{$cmt['cmt_id']}">
+        <div class="comment-content" id="comment-body-{$cmt['cmt_id']}">{$cmt_body}</div>
+    </div>
 
 </div>
 
@@ -247,6 +311,33 @@ echo <<<HTML
 
 <article>{$page_article}</article>
 <aside>{$page_aside}</aside>
+
+<script>
+
+    let allEdit = document.querySelectorAll('a[href="#edit"]');
+    allEdit.forEach(item => {
+        item.onclick = editComment;
+    });
+
+    function editComment(item) {
+        commentId = this.getAttribute('data-id');
+        commentBox = document.getElementById('comment-' + commentId);
+        commentBody = document.getElementById('comment-body-' + commentId).innerHTML;
+        commentBox.innerHTML = `
+<form method="post" action="/edtcom/" class="edit-form" id="comment-form-` + commentId + `">
+    <input type="hidden" name="c" value="` + commentId + `">
+    <input type="hidden" name="a" value="{$id}">
+    <textarea class="comment-content" name="b">`+ commentBody + `</textarea>
+    <button type="submit">Salvar</button>
+</form>
+`;
+        return false;
+    }
+
+    function confirmDel() {
+        return confirm(`Tem certeza que deseja apagar este comentário?\n\nIsso é irrversível!`);
+    }
+</script>
 
 HTML;
 
